@@ -1672,6 +1672,65 @@ public class OpenCC {
     }
 
     /**
+     * Normalizes additional Unicode CJK compatibility and allograph forms.
+     *
+     * <p>This uses the mappings in {@code Unicode_Compatibility.txt} and is
+     * independent of the CJK Compatibility Ideographs normalization performed by
+     * {@link #normalizeCompat(String)}.</p>
+     *
+     * <p>This is an optional pre-conversion operation and is not performed
+     * automatically by {@link #convert(String)}.</p>
+     *
+     * @param text the input text; {@code null} and empty strings return
+     *             {@code ""}
+     * @return normalized text
+     * @since 1.4.3
+     */
+    public String normalizeUnicodeCompat(String text) {
+        return UnicodeCompat.normalize(text);
+    }
+
+    /**
+     * Applies extended Unicode compatibility normalization.
+     *
+     * <p>The normalization order is:</p>
+     * <ol>
+     *     <li>Additional Unicode compatibility/allograph mappings</li>
+     *     <li>CJK Compatibility Ideographs mappings</li>
+     * </ol>
+     *
+     * <p>This order allows text containing both non-standard allographs and
+     * Unicode compatibility ideographs to be normalized in a single pass before
+     * OpenCC conversion.</p>
+     *
+     * <p>This is an optional pre-conversion operation and is not performed
+     * automatically by {@link #convert(String)}.</p>
+     *
+     * @param text the input text; {@code null} and empty strings return
+     *             {@code ""}
+     * @return text after extended compatibility normalization
+     * @since 1.4.3
+     */
+    public String normalizeCompatExtended(String text) {
+        if (text == null || text.isEmpty())
+            return "";
+
+        StringBuilder sb = new StringBuilder(text.length());
+
+        for (int i = 0; i < text.length(); ) {
+            int codePoint = text.codePointAt(i);
+            i += Character.charCount(codePoint);
+
+            codePoint = UnicodeCompat.map(codePoint);
+            codePoint = CompatIdeographs.map(codePoint);
+
+            sb.appendCodePoint(codePoint);
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Applies DeTofu display-compatible fallbacks to mapped rare CJK extension characters.
      *
      * <p>This is a convenience wrapper around {@link DeTofu#convert(String, DeTofu.Level)}.</p>
